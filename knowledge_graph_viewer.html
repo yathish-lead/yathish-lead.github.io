@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.0/dist/svg-pan-zoom.min.js"></script>  
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.3.0/d3.min.js"></script>
+      <script>
+
+        $(function() {
+			$(":file").change(function() {
+				if (this.files && this.files[0]) {
+					var reader = new FileReader();
+					reader.onload = SVGIsLoaded;
+					reader.readAsDataURL(this.files[0]);
+				}
+			});
+		});
+
+		function SVGIsLoaded(e) {
+			// remove data:base64 etc kinda thing before decoding
+			let base64 = e.target.result.split('base64,')[1];
+			// decode base64 string
+			let clear = atob(base64);
+			clear = clear.substring(clear.indexOf("<svg"));
+			var stringContainingXMLSource = clear;
+			document.getElementById('output').innerHTML = stringContainingXMLSource;
+
+			postProcessSVG();
+				
+		}
+
+		function postProcessSVG(){
+			$("svg").each(function() {
+				this.setAttribute("width", "100%");
+				this.setAttribute("height", "100%");
+			});
+			var svgElement = document.querySelector('svg');
+			var svgZoomer = svgPanZoom(svgElement, {
+				minZoom: 0.001
+			});
+			
+			let parents = new Map();
+			let children = new Map();
+
+			deps = [];
+			$.each($("g .edge"), function (key, val) {
+				deps.push(val.querySelector("title").innerHTML);
+			});
+			for (let i = 0; i < deps.length; i++) {
+				dep = deps[i].split('-&gt;')
+				temp = parents.get(dep[1]) || [];
+				temp.push(dep[0])
+				parents.set(dep[1], temp);
+				
+				temp = children.get(dep[0]) || [];
+				temp.push(dep[1])
+				children.set(dep[0], temp);
+			}
+			
+			$("g .node").on("click", function(){
+				clear_details_text();
+				selected_node = this.querySelector("title").innerHTML;
+				selected_node_parents = parents.get(selected_node) || [];
+				selected_node_children = children.get(selected_node) || [];
+				
+				$.each($("g .node"), function (key, val) {
+					node_id = val.querySelector("title").innerHTML;
+					if(node_id==selected_node || selected_node_parents.indexOf(node_id) > -1 || selected_node_children.indexOf(node_id) > -1){
+						this.style.opacity = 1;
+					}
+					else{
+						this.style.opacity = 0.3;
+					}
+
+					// textContent will have node id followed by space followed by descr
+					var a = this.textContent;
+					node_descr = a.substring(this.textContent.indexOf("\n\n")+2);
+					if(node_id==selected_node){
+						var ul = document.getElementById("selected_node");
+						var li = document.createElement("li");
+						li.appendChild(document.createTextNode(node_descr));
+						ul.appendChild(li);
+					}
+					if(selected_node_parents.indexOf(node_id) > -1){
+						var ul = document.getElementById("parent_nodes");
+						var li = document.createElement("li");
+						li.appendChild(document.createTextNode(node_descr));
+						ul.appendChild(li);
+					}
+					if(selected_node_children.indexOf(node_id) > -1){
+						var ul = document.getElementById("child_nodes");
+						var li = document.createElement("li");
+						li.appendChild(document.createTextNode(node_descr));
+						ul.appendChild(li);
+					}
+
+				});
+				
+				$.each($("g .edge"), function (key, val) {
+					edge_nodes = val.querySelector("title").innerHTML;
+					if(edge_nodes.indexOf(selected_node) > -1 || edge_nodes.indexOf(selected_node) > -1){
+						this.style.opacity = 1;
+					}
+					else{
+						this.style.opacity = 0.3;
+					}
+				});
+
+				$.each($("g .cluster"), function (key, val) {
+					this.style.opacity = 0.3;
+				});
+
+			});
+		}
+
+		function reset_opacity(){
+
+			clear_details_text();	
+
+			$.each($("g .node"), function (key, val) {
+				this.style.opacity = 1;
+			});
+			
+			$.each($("g .edge"), function (key, val) {
+				this.style.opacity = 1;
+			});
+
+			$.each($("g .cluster"), function (key, val) {
+				this.style.opacity = 1;
+			});
+		}
+		
+		function reset_viewport(){
+			
+			reset_opacity();
+			clear_details_text();			
+			
+			var svgElement = document.querySelector('svg');
+			var svgZoomer = svgPanZoom(svgElement, {
+				minZoom: 0.001
+			});
+			
+			svgZoomer.reset();
+		}
+
+		function clear_details_text(){
+
+			document.getElementById("selected_node").innerText = "";
+			document.getElementById("parent_nodes").innerHTML = "";
+			document.getElementById("child_nodes").innerHTML = "";
+
+		}
+		
+      </script>
+   </head>
+   <body>
+      <input type='file' />
+	  <button onclick="reset_viewport()">Reset Pan/Zoom</button>
+	  <button onclick="reset_opacity()">Reset Selection</button>
+	  <table style="width: 100%;">
+	  	<tr>
+	  		<td style="width: 70%;">
+	  			<div id="output" style="width: 100%; height: 90vh;"></div>
+	  		</td>
+	  		<td style="width: 30%;" valign="top">
+	  			<div id="details">
+	  				<h3>Selected Node</h3>
+	  				<ul id="selected_node"></ul>
+	  				<h3>Parent Nodes</h3>
+	  				<ul id="parent_nodes"></ul>
+	  				<h3>Child Nodes</h3>
+	  				<ul id="child_nodes"></ul>
+	  			</div>
+	  		</td>
+	  	</tr>
+	  </table>
+      
+   </body>
+</html>
