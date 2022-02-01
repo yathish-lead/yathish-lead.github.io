@@ -2,10 +2,12 @@
 <html>
    <head>
       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.0/dist/svg-pan-zoom.min.js"></script>  
+      <!-- <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.0/dist/svg-pan-zoom.min.js"></script> -->
+	  <!-- maxZoom is not working properly in above js hence customised the js file. hardcoded maxZoom as 100 -->
+      <script src="svg-pan-zoom.min.js"></script>	  
       <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.3.0/d3.min.js"></script>
       <script>
-
+		var isHighlighted = false;
         $(function() {
 			$(":file").change(function() {
 				if (this.files && this.files[0]) {
@@ -36,7 +38,9 @@
 			});
 			var svgElement = document.querySelector('svg');
 			var svgZoomer = svgPanZoom(svgElement, {
-				minZoom: 0.001
+				panEnabled: true,
+				minZoom: 0.5,
+				maxzoom: 10
 			});
 			
 			let parents = new Map();
@@ -58,6 +62,12 @@
 			}
 			
 			$("g .node").on("click", function(){
+				if(isHighlighted){
+					reset_opacity();
+					isHighlighted = false;
+					return true;
+				}
+				isHighlighted = true;
 				clear_details_text();
 				selected_node = this.querySelector("title").innerHTML;
 				selected_node_parents = parents.get(selected_node) || [];
@@ -137,7 +147,8 @@
 			
 			var svgElement = document.querySelector('svg');
 			var svgZoomer = svgPanZoom(svgElement, {
-				minZoom: 0.001
+				minZoom: 1,
+				maxzoom: 100
 			});
 			
 			svgZoomer.reset();
