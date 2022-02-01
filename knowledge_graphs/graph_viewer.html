@@ -64,7 +64,6 @@
 			$("g .node").on("click", function(){
 				if(isHighlighted){
 					reset_opacity();
-					isHighlighted = false;
 					return true;
 				}
 				isHighlighted = true;
@@ -126,6 +125,8 @@
 		function reset_opacity(){
 
 			clear_details_text();	
+			
+			isHighlighted = false;
 
 			$.each($("g .node"), function (key, val) {
 				this.style.opacity = 1;
