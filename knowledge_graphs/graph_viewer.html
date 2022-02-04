@@ -15,6 +15,38 @@
 					reader.onload = SVGIsLoaded;
 					reader.readAsDataURL(this.files[0]);
 				}
+				else {
+					alert("First click on Choose File and select a file to be uploaded!");
+				}
+			});
+		});
+		
+		function fetch_svg(){
+			var MY_URL = document.getElementById("svg_url").value;
+			if(MY_URL==""){
+				alert('Please enter an svg URL or upload an SVG file!');
+				return false;
+			}
+			if(MY_URL.indexOf("github.com")>-1 && MY_URL.indexOf("/blob")>-1){
+				MY_URL = MY_URL.replace('github.com','raw.githubusercontent.com').replace('blob/','')
+			}
+			var request = new XMLHttpRequest();
+			request.open('GET', MY_URL, true);
+			request.responseType = 'blob';
+			request.onload = function() {
+				var reader = new FileReader();
+				reader.readAsDataURL(request.response);
+				reader.onload =  SVGIsLoaded;
+			};
+			request.send();
+		}
+		$(function() {
+			$(":file").change(function() {
+				if (this.files && this.files[0]) {
+					var reader = new FileReader();
+					reader.onload = SVGIsLoaded;
+					reader.readAsDataURL(this.files[0]);
+				}
 			});
 		});
 
@@ -166,7 +198,12 @@
       </script>
    </head>
    <body>
-      <input type='file' />
+	Provide a direct SVG URL or an SVG link from the <a href="https://github.com/yathish-lead/yathish-lead.github.io/tree/main/knowledge_graphs/svgs">git repository</a>.
+	  <input type="text" id="svg_url" placeholder="Enter SVG URL">
+	  <input type="submit" value="Submit SVG URL" onclick="fetch_svg()">
+	  <br><br>Or upload an svg file:
+	  <input type='file'/>
+	  <br><br>
 	  <button onclick="reset_viewport()">Reset Pan/Zoom</button>
 	  <button onclick="reset_opacity()">Reset Selection</button>
 	  <table style="width: 100%;">
